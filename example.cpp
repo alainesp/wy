@@ -1,28 +1,10 @@
-# wy
-C++ wrapper around wyhash and wyrand: https://github.com/wangyi-fudan/wyhash
+/////////////////////////////////////////////////////////////////////////////////
+// This file is a C++ wrapper around wyhash: 
+// https://github.com/wangyi-fudan/wyhash
+// 
+// Copyright (c) 2022 by Alain Espinosa.
+/////////////////////////////////////////////////////////////////////////////////
 
-wyhash and wyrand are the ideal 64-bit hash function and PRNG respectively:
-
-- Solid: wyhash passed SMHasher, wyrand passed BigCrush, practrand.
-- Portable: 64-bit / 32-bit system, big / little endian.
-- Fastest: Efficient on 64-bit machines, especially for short keys.
-- Simplest: In the sense of code size.
-- Salted: We use dynamic secret to avoid intended attack.
-
-# Usage
-
-First you need to link the library to your project with cmake:
-
-```cmake
-include(FetchContent)
-FetchContent_Declare(wy URL https://github.com/alainesp/wy/archive/refs/heads/main.zip)
-FetchContent_MakeAvailable(wy)
-target_link_libraries(YOUR_TARGET PRIVATE wy)
-```
-
-## Random generation example
-
-```cpp
 // include the required header
 #include <wy.hpp>
 #include <random>
@@ -49,5 +31,3 @@ void main()
 	std::normal_distribution<double> gdist(1.1, 2.3);
 	r_gaussian_p = gdist(r); // Similar to r.gaussian_dist(1.1, 2.3) but slower
 }
-
-```

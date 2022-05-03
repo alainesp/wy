@@ -16,8 +16,15 @@ elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)# 32 bits
     message(WARNING "32 bits detected -> Non-optimal performance")
 endif()
 
+option(BUILD_EXAMPLE "Build the example" OFF)
+
 ###############################################################################################################
 # Library configuration
 ###############################################################################################################
 add_library(wy STATIC "wy.cpp")
 target_include_directories(wy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+if(BUILD_EXAMPLE)
+    add_executable(wyexamples "example.cpp")
+    target_link_libraries(wyexamples PRIVATE wy)
+endif()

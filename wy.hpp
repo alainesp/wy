@@ -13,6 +13,8 @@
 // salted: We use dynamic secret to avoid intended attack.
 
 #include <cstdint>
+#include <vector>
+#include <string>
 
 namespace wy {
 
@@ -39,7 +41,7 @@ namespace wy {
 		/// </summary>
 		static constexpr result_type max() { return UINT64_MAX; }
 		/// <summary>
-		/// Returns a random value in the closed interval [min(), max()].
+		/// Returns a random value in the closed interval [0, UINT64_MAX].
 		/// </summary>
 		/// <returns>A new 64-bit pseudo-random value</returns>
 		uint64_t operator()() noexcept;
