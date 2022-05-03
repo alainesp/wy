@@ -33,7 +33,7 @@ void main()
 	wy::rand r;
 
 	// Using direct methods
-    uint64_t r_value = r();                          // Generate a random number
+	uint64_t r_value = r();                          // Generate a random number
 	double r_uniform01 = r.uniform_dist();           // Generate a random number from the uniform distribution [0, 1)
 	uint64_t runiformk = r.uniform_dist(13);         // Generate a random number from the uniform distribution [0, 13)
 	double r_uniform_p = r.uniform_dist(1.5, 4.7);   // Generate a random number from the uniform distribution [1.5, 4.7)
