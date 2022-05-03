@@ -32,9 +32,8 @@ void main()
 	// Create a pseudo-random generator
 	wy::rand r;
 
-	uint64_t r_value = r();                          // Generate a random number
-
 	// Using direct methods
+    uint64_t r_value = r();                          // Generate a random number
 	double r_uniform01 = r.uniform_dist();           // Generate a random number from the uniform distribution [0, 1)
 	uint64_t runiformk = r.uniform_dist(13);         // Generate a random number from the uniform distribution [0, 13)
 	double r_uniform_p = r.uniform_dist(1.5, 4.7);   // Generate a random number from the uniform distribution [1.5, 4.7)
@@ -49,5 +48,40 @@ void main()
 	std::normal_distribution<double> gdist(1.1, 2.3);
 	r_gaussian_p = gdist(r); // Similar to r.gaussian_dist(1.1, 2.3) but slower
 }
+```
 
+## Hash function example
+
+```cpp
+// include the required header
+#include <wy.hpp>
+#include <unordered_map>
+
+struct Person
+{
+	std::string name;
+	std::string surname;
+};
+
+void main()
+{
+	// Create random persons
+	std::vector<Person> persons;
+	for (size_t i = 0; i < 500; i++)
+		persons.push_back(Person{ std::string("Person Name") + std::to_string(i), std::string("Surname") });
+
+	// Create hashtable
+	std::unordered_map<std::string, Person, wy::hash<std::string>> h;
+
+	// Add persons to the hashtable
+	for (size_t i = 0; i < persons.size(); i++)
+		h[persons[i].name] = persons[i];
+
+	// Count persons
+	size_t persons_found = 0;
+	for (size_t i = 0; i < persons.size() * 2; i++)
+		persons_found += h.count(std::string("Person Name") + std::to_string(i));
+
+	printf("Found %I64i persons", persons_found);
+}
 ```

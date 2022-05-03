@@ -9,7 +9,7 @@
 #include <wy.hpp>
 #include <random>
 
-void main()
+void main_rand()
 {
 	// Create a pseudo-random generator
 	wy::rand r;
@@ -30,4 +30,40 @@ void main()
 
 	std::normal_distribution<double> gdist(1.1, 2.3);
 	r_gaussian_p = gdist(r); // Similar to r.gaussian_dist(1.1, 2.3) but slower
+}
+
+#include <unordered_map>
+
+struct Person
+{
+	std::string name;
+	std::string surname;
+};
+
+void main_hash()
+{
+	// Create random persons
+	std::vector<Person> persons;
+	for (size_t i = 0; i < 500; i++)
+		persons.push_back(Person{ std::string("Person Name") + std::to_string(i), std::string("Surname") });
+
+	// Create hashtable
+	std::unordered_map<std::string, Person, wy::hash<std::string>> h;
+
+	// Add persons to the hashtable
+	for (size_t i = 0; i < persons.size(); i++)
+		h[persons[i].name] = persons[i];
+
+	// Count persons
+	size_t persons_found = 0;
+	for (size_t i = 0; i < persons.size() * 2; i++)
+		persons_found += h.count(std::string("Person Name") + std::to_string(i));
+
+	printf("Found %I64i persons", persons_found);
+}
+
+void main()
+{
+	main_rand();
+	main_hash();
 }
