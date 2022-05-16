@@ -91,6 +91,13 @@ namespace wy {
 		/// <param name="std">The Gaussian Standard Deviation</param>
 		/// <returns>The random value</returns>
 		double gaussian_dist(double mean, double std) noexcept;
+
+		/// <summary>
+		/// Generate a random stream of bytes.
+		/// </summary>
+		/// <param name="size">The size of the stream to generate</param>
+		/// <returns>A vector of random bytes</returns>
+		std::vector<uint8_t> generate_stream(size_t size) noexcept;
 	};
 
 	/// <summary>
