@@ -149,27 +149,29 @@ namespace wy {
 		/// <summary>
 		/// Generate a random stream of bytes.
 		/// </summary>
-		/// <param name="size">The size of the stream to generate</param>
-		/// <returns>A vector of random bytes</returns>
-		inline std::vector<uint8_t> generate_stream(size_t size) noexcept
+		/// <typeparam name="T">The type of elements on the vector to fill with random data</typeparam>
+		/// <param name="size">The number of elements of the vector to generate</param>
+		/// <returns>A vector of random elements</returns>
+		template<class T=uint8_t> inline std::vector<T> generate_stream(size_t size) noexcept
 		{
-			std::vector<uint8_t> result;
-			generate_stream(result, size);
+			std::vector<T> result;
+			generate_stream<T>(result, size);
 			return result;
 		}
 
 		/// <summary>
 		/// Generate a random stream of bytes.
 		/// </summary>
-		/// <param name="vec">out: A vector of random bytes</param>
-		/// <param name="size">The size of the stream to generate</param>
-		void generate_stream(std::vector<uint8_t>& vec, size_t size) noexcept
+		/// <typeparam name="T">The type of elements on the vector to fill with random data</typeparam>
+		/// <param name="vec">out: A vector of random elements</param>
+		/// <param name="size">The number of elements of the vector to generate</param>
+		template<class T=uint8_t> void generate_stream(std::vector<T>& vec, size_t size) noexcept
 		{
-			size_t sizeOf64 = (size + sizeof(uint64_t) - 1) / sizeof(uint64_t); // The number of 64-bits numbers to generate
+			size_t sizeOf64 = (size * sizeof(T) + sizeof(uint64_t) - 1) / sizeof(uint64_t); // The number of 64-bits numbers to generate
 
 			// Create the memory on the vector
-			vec.resize(sizeOf64 * sizeof(uint64_t), 0);
-			uint8_t* dataPtr = vec.data();
+			vec.resize((sizeOf64 * sizeof(uint64_t) + sizeof(T) - 1) / sizeof(T), 0);
+			uint8_t* dataPtr = reinterpret_cast<uint8_t*>(vec.data());
 
 			// Generate random values
 			for (size_t i = 0; i < sizeOf64; i++)
