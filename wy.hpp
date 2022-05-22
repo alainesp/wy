@@ -146,7 +146,7 @@ namespace wy::internal
 	static inline uint64_t _wyr3(const uint8_t* p, size_t k) noexcept { return (((uint64_t)p[0]) << 16) | (((uint64_t)p[k >> 1]) << 8) | p[k - 1]; }
 
 	// A useful 64bit-64bit mix function to produce deterministic pseudo random numbers that can pass BigCrush and PractRand
-	static inline uint64_t wyhash64(uint64_t A, uint64_t B) { A ^= 0xa0761d6478bd642full; B ^= 0xe7037ed1a0b428dbull; _wymum(&A, &B); return _wymix(A ^ 0xa0761d6478bd642full, B ^ 0xe7037ed1a0b428dbull); }
+	static inline uint64_t wyhash64(uint64_t A, uint64_t B) noexcept { A ^= 0xa0761d6478bd642full; B ^= 0xe7037ed1a0b428dbull; _wymum(&A, &B); return _wymix(A ^ 0xa0761d6478bd642full, B ^ 0xe7037ed1a0b428dbull); }
 
 	// The wyrand PRNG that pass BigCrush and PractRand
 	static inline uint64_t wyrand(uint64_t* seed) noexcept { *seed += 0xa0761d6478bd642full; return _wymix(*seed, *seed ^ 0xe7037ed1a0b428dbull); }
