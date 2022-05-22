@@ -94,13 +94,13 @@
 namespace wy::internal
 {
 	// 128bit multiply function
-#if(WYHASH_32BIT_MUM)
+#if WYHASH_32BIT_MUM
 	static inline uint64_t _wyrot(uint64_t x) { return (x >> 32) | (x << 32); }
 #endif
 	static inline void _wymum(uint64_t* A, uint64_t* B) noexcept {
-#if(WYHASH_32BIT_MUM)
+#if WYHASH_32BIT_MUM
 		uint64_t hh = (*A >> 32) * (*B >> 32), hl = (*A >> 32) * (uint32_t)*B, lh = (uint32_t)*A * (*B >> 32), ll = (uint64_t)(uint32_t)*A * (uint32_t)*B;
-	#if(WYHASH_CONDOM>1)
+	#if WYHASH_CONDOM > 1
 		* A ^= _wyrot(hl) ^ hh; *B ^= _wyrot(lh) ^ ll;
 	#else
 		* A = _wyrot(hl) ^ hh; *B = _wyrot(lh) ^ ll;
@@ -113,7 +113,7 @@ namespace wy::internal
 		* A = (uint64_t)r; *B = (uint64_t)(r >> 64);
 	#endif
 #elif defined(_MSC_VER) && defined(_M_X64)
-	#if(WYHASH_CONDOM>1)
+	#if WYHASH_CONDOM > 1
 		uint64_t  a, b;
 		a = _umul128(*A, *B, &b);
 		*A ^= a;  *B ^= b;
@@ -124,7 +124,7 @@ namespace wy::internal
 		uint64_t ha = *A >> 32, hb = *B >> 32, la = (uint32_t)*A, lb = (uint32_t)*B, hi, lo;
 		uint64_t rh = ha * hb, rm0 = ha * lb, rm1 = hb * la, rl = la * lb, t = rl + (rm0 << 32), c = t < rl;
 		lo = t + (rm1 << 32); c += lo < t; hi = rh + (rm0 >> 32) + (rm1 >> 32) + c;
-	#if(WYHASH_CONDOM>1)
+	#if WYHASH_CONDOM > 1
 		* A ^= lo;  *B ^= hi;
 	#else
 		* A = lo;  *B = hi;
@@ -136,7 +136,7 @@ namespace wy::internal
 	static inline uint64_t _wymix(uint64_t A, uint64_t B) noexcept { _wymum(&A, &B); return A ^ B; }
 
 	// read functions
-#if (WYHASH_LITTLE_ENDIAN)
+#if WYHASH_LITTLE_ENDIAN
 	static inline uint64_t _wyr8(const uint8_t* p) noexcept { uint64_t v; memcpy(&v, p, 8); return v; }
 	static inline uint64_t _wyr4(const uint8_t* p) noexcept { uint32_t v; memcpy(&v, p, 4); return v; }
 #else
