@@ -170,7 +170,7 @@ namespace wy {
 			size_t sizeOf64 = (size * sizeof(T) + sizeof(uint64_t) - 1) / sizeof(uint64_t); // The number of 64-bits numbers to generate
 
 			// Create the memory on the vector
-			vec.resize((sizeOf64 * sizeof(uint64_t) + sizeof(T) - 1) / sizeof(T), 0);
+			vec.resize((sizeOf64 * sizeof(uint64_t) + sizeof(T) - 1) / sizeof(T));
 			uint8_t* dataPtr = reinterpret_cast<uint8_t*>(vec.data());
 
 			// Generate random values
@@ -350,8 +350,8 @@ namespace wy {
 		using hash_string_base::hash_string_base;// Inherit constructors
 	};
 	
-#if __cplusplus >= 201703L// C++ 2017
 	// std::string_view variants
+#if __cpp_lib_string_view
 	template<> struct hash<std::string_view> : public internal::hash_string_base<std::string_view>
 	{
 		using hash_string_base::hash_string_base;// Inherit constructors
@@ -368,8 +368,10 @@ namespace wy {
 	{
 		using hash_string_base::hash_string_base;// Inherit constructors
 	};
+#endif
 	// std::pmr::string variants
-	template<> struct hash<std::pmr::string> : public internal::hash_string_base<std::std::pmr::string>
+#if __cpp_lib_polymorphic_allocator
+	template<> struct hash<std::pmr::string> : public internal::hash_string_base<std::pmr::string>
 	{
 		using hash_string_base::hash_string_base;// Inherit constructors
 	};
@@ -387,9 +389,8 @@ namespace wy {
 	};
 #endif
 
-	// TODO: Consider using  __cpp_char8_t?
-#if __cplusplus >= 202001L// C++ 2020
 	// char8_t string variants
+#if __cpp_char8_t
 	template<> struct hash<std::u8string> : public internal::hash_string_base<std::u8string>
 	{
 		using hash_string_base::hash_string_base;// Inherit constructors
