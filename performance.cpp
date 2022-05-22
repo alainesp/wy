@@ -86,7 +86,8 @@ void main_rand()
 	//////////////////////////////////////////////////////////////////////////////////////
 	// Stream operation
 	//////////////////////////////////////////////////////////////////////////////////////
-	std::vector<uint8_t> vec(4096, 0);
+	std::vector<uint8_t> vec(4096, 0); 
+	constexpr double GiB2GB = 1'000'000. / (1024 * 1024);// Constant to convert to base-2 GB definition
 	start = std::chrono::high_resolution_clock::now();
 	for (size_t i = 0; i < numIterStream; i++)
 	{
@@ -95,7 +96,7 @@ void main_rand()
 	}
 	stop = std::chrono::high_resolution_clock::now();
 	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << std::format("Stream  [1024]      : {:.1f} GB/sec\n", (double)numIterStream / duration.count());// Show performance on millions operations per second
+	std::cout << std::format("Stream  [1024]      : {:.1f} GB/sec\n", GiB2GB * numIterStream / duration.count());// Show performance on GB per second
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// Stream operation
@@ -108,7 +109,7 @@ void main_rand()
 	}
 	stop = std::chrono::high_resolution_clock::now();
 	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << std::format("Stream  [4096]      : {:.1f} GB/sec\n", (double)numIterStream * 4 / duration.count());// Show performance on millions operations per second
+	std::cout << std::format("Stream  [4096]      : {:.1f} GB/sec\n", GiB2GB * numIterStream * 4 / duration.count());// Show performance on GB per second
 
 	std::cout << "--------------------------------------------------" << std::endl;
 

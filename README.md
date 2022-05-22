@@ -88,7 +88,9 @@ void main()
 }
 ```
 
-## Performance on a single threaded Ryzen 7 4800H CPU
+## Performance
+
+Running on a single threaded Ryzen 7 4800H laptop CPU
 
 ```bash
 --------------------------------------------------
@@ -103,8 +105,8 @@ Uniform [0, k)      : 1047M op/sec
 Gaussian [0, 1]     : 769M op/sec
 Gaussian [mean, std]: 720M op/sec
 --------------------------------------------------
-Stream  [1024]      : 13.5 GB/sec
-Stream  [4096]      : 10.8 GB/sec
+Stream  [1024]      : 12.9 GB/sec
+Stream  [4096]      : 10.3 GB/sec
 
 --------------------------------------------------
 Hashing Performance
