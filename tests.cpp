@@ -99,10 +99,12 @@ TEST(wyrand, Uniform)
 		ASSERT_LT(val, -1);
 		ASSERT_EQ(val, -1.2 + (-1 + 1.2) * wy2u01(wyrand(&originalSeed)));
 
+#if !WYHASH_32BIT_MUM
 		uint64_t valk = r.uniform_dist(500);
 		ASSERT_GE(valk, 0);
 		ASSERT_LT(valk, 500);
 		ASSERT_EQ(valk, wy2u0k(wyrand(&originalSeed), 500));
+#endif
 	}
 }
 

@@ -52,6 +52,7 @@ void main_rand()
 	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 	std::cout << std::format("Uniform [min, max)  : {}M op/sec\n", numIter / duration.count());// Show performance on millions operations per second
 
+#if !WYHASH_32BIT_MUM
 	//////////////////////////////////////////////////////////////////////////////////////
 	// Uniform operation
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -62,6 +63,7 @@ void main_rand()
 	std::cout << std::format("Uniform [0, k)      : {}M op/sec\n", numIter / duration.count());// Show performance on millions operations per second
 
 	std::cout << "--------------------------------------------------" << std::endl;
+#endif
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// Gaussian operation

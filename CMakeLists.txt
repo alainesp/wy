@@ -31,6 +31,7 @@ target_include_directories(wy INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 ###############################################################################################################
 if(WY_BUILD_EXAMPLE)
     add_executable(wyexamples "example.cpp")
+    set_property(TARGET wyexamples PROPERTY CXX_STANDARD 20)	 # C++ language to use
     target_link_libraries(wyexamples PRIVATE wy)
 endif()
 

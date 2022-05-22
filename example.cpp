@@ -33,6 +33,8 @@ void main_rand()
 }
 
 #include <unordered_map>
+#include <iostream>
+#include <format>
 
 struct Person
 {
@@ -59,11 +61,13 @@ void main_hash()
 	for (size_t i = 0; i < persons.size() * 2; i++)
 		persons_found += h.count(std::string("Person Name") + std::to_string(i));
 
-	printf("Found %I64i persons", persons_found);
+	std::cout << std::format("Found {} persons", persons_found) << std::endl;
 }
 
-void main()
+int main()
 {
 	main_rand();
 	main_hash();
+
+	return 0;
 }

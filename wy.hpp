@@ -97,7 +97,7 @@ namespace wy::internal
 #if(WYHASH_32BIT_MUM)
 	static inline uint64_t _wyrot(uint64_t x) { return (x >> 32) | (x << 32); }
 #endif
-	static inline void _wymum(uint64_t* A, uint64_t* B) {
+	static inline void _wymum(uint64_t* A, uint64_t* B) noexcept {
 #if(WYHASH_32BIT_MUM)
 		uint64_t hh = (*A >> 32) * (*B >> 32), hl = (*A >> 32) * (uint32_t)*B, lh = (uint32_t)*A * (*B >> 32), ll = (uint64_t)(uint32_t)*A * (uint32_t)*B;
 	#if(WYHASH_CONDOM>1)
@@ -133,24 +133,24 @@ namespace wy::internal
 	}
 
 	// multiply and xor mix function, aka MUM
-	static inline uint64_t _wymix(uint64_t A, uint64_t B) { _wymum(&A, &B); return A ^ B; }
+	static inline uint64_t _wymix(uint64_t A, uint64_t B) noexcept { _wymum(&A, &B); return A ^ B; }
 
 	// read functions
 #if (WYHASH_LITTLE_ENDIAN)
-	static inline uint64_t _wyr8(const uint8_t* p) { uint64_t v; memcpy(&v, p, 8); return v; }
-	static inline uint64_t _wyr4(const uint8_t* p) { uint32_t v; memcpy(&v, p, 4); return v; }
+	static inline uint64_t _wyr8(const uint8_t* p) noexcept { uint64_t v; memcpy(&v, p, 8); return v; }
+	static inline uint64_t _wyr4(const uint8_t* p) noexcept { uint32_t v; memcpy(&v, p, 4); return v; }
 #else
-	static inline uint64_t _wyr8(const uint8_t* p) { uint64_t v; memcpy(&v, p, 8); return byteswap64(v); }
-	static inline uint64_t _wyr4(const uint8_t* p) { uint32_t v; memcpy(&v, p, 4); return byteswap32(v); }
+	static inline uint64_t _wyr8(const uint8_t* p) noexcept { uint64_t v; memcpy(&v, p, 8); return byteswap64(v); }
+	static inline uint64_t _wyr4(const uint8_t* p) noexcept { uint32_t v; memcpy(&v, p, 4); return byteswap32(v); }
 #endif
-	static inline uint64_t _wyr3(const uint8_t* p, size_t k) { return (((uint64_t)p[0]) << 16) | (((uint64_t)p[k >> 1]) << 8) | p[k - 1]; }
+	static inline uint64_t _wyr3(const uint8_t* p, size_t k) noexcept { return (((uint64_t)p[0]) << 16) | (((uint64_t)p[k >> 1]) << 8) | p[k - 1]; }
 
 	// The wyrand PRNG that pass BigCrush and PractRand
-	static inline uint64_t wyrand(uint64_t* seed) { *seed += 0xa0761d6478bd642full; return _wymix(*seed, *seed ^ 0xe7037ed1a0b428dbull); }
+	static inline uint64_t wyrand(uint64_t* seed) noexcept { *seed += 0xa0761d6478bd642full; return _wymix(*seed, *seed ^ 0xe7037ed1a0b428dbull); }
 
-#if(!WYHASH_32BIT_MUM)
+#if !WYHASH_32BIT_MUM
 	// fast range integer random number generation on [0,k) credit to Daniel Lemire. May not work when WYHASH_32BIT_MUM=1. It can be combined with wyrand, wyhash64 or wyhash.
-	static inline uint64_t wy2u0k(uint64_t r, uint64_t k) { _wymum(&r, &k); return k; }
+	static inline uint64_t wy2u0k(uint64_t r, uint64_t k) noexcept { _wymum(&r, &k); return k; }
 #endif
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -231,6 +231,7 @@ namespace wy {
 			return uniform_dist() * (max_value - min_value) + min_value;
 		}
 
+#if !WYHASH_32BIT_MUM
 		/// <summary>
 		/// Fast generation of a random value from the uniform distribution [0, max_value)
 		/// </summary>
@@ -240,6 +241,7 @@ namespace wy {
 		{
 			return internal::wy2u0k(operator()(), max_value);
 		}
+#endif
 
 		/// <summary>
 		/// Generate a random value from APPROXIMATE Gaussian distribution with mean=0 and std=1
@@ -409,11 +411,10 @@ namespace wy {
 			inline uint64_t wyhash(uint64_t number) const noexcept
 			{
 				// code taken from 'wyhash.h::wyhash64(uint64_t A, uint64_t B)'
-				uint64_t A = number;
-				uint64_t B = secret[0];
-				A ^= 0xa0761d6478bd642full; B ^= 0xe7037ed1a0b428dbull;
-				_wymum(&A, &B);
-				return _wymix(A ^ 0xa0761d6478bd642full, B ^ 0xe7037ed1a0b428dbull);
+				number ^= 0xa0761d6478bd642full;
+				uint64_t B = secret[0] ^ 0xe7037ed1a0b428dbull;
+				_wymum(&number, &B);
+				return _wymix(number ^ 0xa0761d6478bd642full, B ^ 0xe7037ed1a0b428dbull);
 			}
 		};
 
