@@ -22,8 +22,8 @@ option(WY_BUILD_PERFORMANCE "Build the performance testing" OFF)
 ###############################################################################################################
 # Library configuration
 ###############################################################################################################
-add_library(wy STATIC "wy.cpp")
-target_include_directories(wy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+add_library(wy INTERFACE)
+target_include_directories(wy INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(WY_BUILD_EXAMPLE)
     add_executable(wyexamples "example.cpp")

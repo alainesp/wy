@@ -20,6 +20,8 @@ FetchContent_MakeAvailable(wy)
 target_link_libraries(YOUR_TARGET PRIVATE wy)
 ```
 
+Or simply download the *wy.hpp* header that is the only requirement.
+
 ## Random generation example
 
 ```cpp
@@ -84,4 +86,33 @@ void main()
 
 	printf("Found %I64i persons", persons_found);
 }
+```
+
+## Performance on a single threaded Ryzen 7 4800H CPU
+
+```bash
+--------------------------------------------------
+Random Performance
+--------------------------------------------------
+Random              : 1384M op/sec
+--------------------------------------------------
+Uniform [0, 1)      : 1153M op/sec
+Uniform [min, max)  : 1013M op/sec
+Uniform [0, k)      : 1047M op/sec
+--------------------------------------------------
+Gaussian [0, 1]     : 769M op/sec
+Gaussian [mean, std]: 720M op/sec
+--------------------------------------------------
+Stream  [1024]      : 13.5 GB/sec
+Stream  [4096]      : 10.8 GB/sec
+
+--------------------------------------------------
+Hashing Performance
+--------------------------------------------------
+uint64_t         : 1104M op/sec
+std::string(14)  :  368M op/sec
+std::string(28)  :  323M op/sec
+std::string(112) :  184M op/sec
+std::string(448) :   61M op/sec
+--------------------------------------------------
 ```
