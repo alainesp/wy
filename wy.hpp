@@ -13,6 +13,7 @@
 // salted: We use dynamic secret to avoid intended attack.
 
 #include <cassert>
+#include <cstring>
 #include <cstdint>
 #include <vector>
 #include <random>
@@ -426,7 +427,7 @@ namespace wy {
 			using hash_imp::hash_imp;// Inherit constructors
 			inline uint64_t operator()(const STRING_TYPE& elem) const noexcept
 			{
-				return hash_imp::wyhash(reinterpret_cast<const uint8_t*>(elem.data()), sizeof(STRING_TYPE::value_type) * elem.size());
+				return hash_imp::wyhash(reinterpret_cast<const uint8_t*>(elem.data()), sizeof(typename STRING_TYPE::value_type) * elem.size());
 			}
 		};
 	};
