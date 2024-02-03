@@ -19,6 +19,9 @@
 #include <random>
 #include <string>
 #include <version>
+#ifdef __cpp_lib_span
+	#include <span>
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // wyhash.h
@@ -313,6 +316,39 @@ namespace wy {
 			// Final size
 			vec.resize(size);
 		}
+#ifdef __cpp_lib_span
+		/// <summary>
+		/// Generate a random stream of bytes.
+		/// </summary>
+		/// <typeparam name="T">The type of elements on the span to fill with random data</typeparam>
+		/// <param name="data">out: A span of random elements</param>
+		template<class T = uint8_t> void generate_stream(std::span<T> data) noexcept
+		{
+			uint64_t* dataPtr = reinterpret_cast<uint64_t*>(data.data());
+
+			// Generate random values
+			for (size_t i = 0; i < data.size() * sizeof(T) / sizeof(uint64_t); i++, dataPtr++)
+			{
+#if WYHASH_LITTLE_ENDIAN
+				uint64_t val = operator()();
+#else
+				uint64_t val = byteswap64(operator()());
+#endif
+				memcpy(dataPtr, &val, sizeof(uint64_t));
+			}
+			// Final part
+			size_t rest = data.size() * sizeof(T) % sizeof(uint64_t);
+			if (rest)
+			{
+#if WYHASH_LITTLE_ENDIAN
+				uint64_t val = operator()();
+#else
+				uint64_t val = byteswap64(operator()());
+#endif
+				memcpy(dataPtr, &val, rest);
+			}
+		}
+#endif
 	};
 
 	/// <summary>
