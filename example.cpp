@@ -9,7 +9,7 @@
 #include <wy.hpp>
 #include <random>
 
-void main_rand()
+static void main_rand()
 {
 	// Create a pseudo-random generator
 	wy::rand r;
@@ -34,7 +34,6 @@ void main_rand()
 
 #include <unordered_map>
 #include <iostream>
-#include <format>
 
 struct Person
 {
@@ -42,7 +41,7 @@ struct Person
 	std::string surname;
 };
 
-void main_hash()
+static void main_hash()
 {
 	// Create random persons
 	std::vector<Person> persons;
@@ -61,7 +60,7 @@ void main_hash()
 	for (size_t i = 0; i < persons.size() * 2; i++)
 		persons_found += h.count(std::string("Person Name") + std::to_string(i));
 
-	std::cout << std::format("Found {} persons", persons_found) << std::endl;
+	std::cout << "Found " << persons_found << " persons" << std::endl;
 }
 
 int main()
