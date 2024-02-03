@@ -33,12 +33,40 @@ if(WY_BUILD_EXAMPLE)
     add_executable(wyexamples "example.cpp")
     set_property(TARGET wyexamples PROPERTY CXX_STANDARD 20)	 # C++ language to use
     target_link_libraries(wyexamples PRIVATE wy)
+
+# Warning level 4 and all warnings as errors
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.24)
+    cmake_policy(SET CMP0135 NEW) # Avoid warning about DOWNLOAD_EXTRACT_TIMESTAMP in CMake 3.24
+    set_property(TARGET wyexamples PROPERTY COMPILE_WARNING_AS_ERROR ON)
+else()
+    if(MSVC)
+        target_compile_options(wyexamples PRIVATE /W4 /WX)
+        target_link_options(wyexamples PRIVATE /W4 /WX)
+    else()
+        target_compile_options(wyexamples PRIVATE -Wall -Wextra -pedantic -Werror -Wl,--fatal-warnings)
+    endif()
+endif()
+
 endif()
 
 if(WY_BUILD_PERFORMANCE)
     add_executable(wyperformance "performance.cpp")
     set_property(TARGET wyperformance PROPERTY CXX_STANDARD 20)	 # C++ language to use
     target_link_libraries(wyperformance PRIVATE wy)
+
+# Warning level 4 and all warnings as errors
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.24)
+    cmake_policy(SET CMP0135 NEW) # Avoid warning about DOWNLOAD_EXTRACT_TIMESTAMP in CMake 3.24
+    set_property(TARGET wyperformance PROPERTY COMPILE_WARNING_AS_ERROR ON)
+else()
+    if(MSVC)
+        target_compile_options(wyperformance PRIVATE /W4 /WX)
+        target_link_options(wyperformance PRIVATE /W4 /WX)
+    else()
+        target_compile_options(wyperformance PRIVATE -Wall -Wextra -pedantic -Werror -Wl,--fatal-warnings)
+    endif()
+endif()
+
 endif()
 
 ###############################################################################################################
@@ -57,6 +85,19 @@ if(WY_BUILD_TESTS)
     add_executable(runUnitTests "tests.cpp")
     set_property(TARGET runUnitTests PROPERTY CXX_STANDARD 20) # C++ language to use
     target_link_libraries(runUnitTests PRIVATE wy gtest_main)
+
+# Warning level 4 and all warnings as errors
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.24)
+    cmake_policy(SET CMP0135 NEW) # Avoid warning about DOWNLOAD_EXTRACT_TIMESTAMP in CMake 3.24
+    set_property(TARGET runUnitTests PROPERTY COMPILE_WARNING_AS_ERROR ON)
+else()
+    if(MSVC)
+        target_compile_options(runUnitTests PRIVATE /W4 /WX)
+        target_link_options(runUnitTests PRIVATE /W4 /WX)
+    else()
+        target_compile_options(runUnitTests PRIVATE -Wall -Wextra -pedantic -Werror -Wl,--fatal-warnings)
+    endif()
+endif()
 
     include(GoogleTest)
     gtest_discover_tests(runUnitTests)
