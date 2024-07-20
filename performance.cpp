@@ -2,183 +2,141 @@
 // This file is a C++ wrapper around wyhash: 
 // https://github.com/wangyi-fudan/wyhash
 // 
-// Copyright (c) 2022 by Alain Espinosa.
+// Copyright (c) 2022-2024 by Alain Espinosa.
 /////////////////////////////////////////////////////////////////////////////////
 
 // include the required header
 #include <wy.hpp>
-#include <chrono>
-#include <iostream>
+#include <benchmark/benchmark.h>
+#include <cstdint>
+#include <vector>
+#include <string>
+#include <array>
 
-static void main_rand()
+// Random common
+static void BM_random_common(benchmark::State& _benchmark_state)
 {
-	constexpr size_t numIter = 1'000'000'000;
-	constexpr size_t numIterStream = 10'000'000;
-	// Create a pseudo-random generator
-	wy::rand r;
-	uint64_t no_op = 0;// variable to restrict compiler optimizations
-	double no_opd = 0;
+	wy::rand r; // Create a pseudo-random generator
+	for (auto _ : _benchmark_state) r();
 
-	std::cout << "--------------------------------------------------" << std::endl;
-	std::cout << "Random Performance" << std::endl;
-	std::cout << "--------------------------------------------------" << std::endl;
+	benchmark::DoNotOptimize(r()); // Restrict compiler optimizations
+	_benchmark_state.SetItemsProcessed(_benchmark_state.iterations());
+}
+BENCHMARK(BM_random_common);
 
-	//////////////////////////////////////////////////////////////////////////////////////
-	// Common operation
-	//////////////////////////////////////////////////////////////////////////////////////
-	auto start = std::chrono::high_resolution_clock::now();
-	for (size_t i = 0; i < numIter; i++) no_op ^= r();// Generate a random number
-	auto stop = std::chrono::high_resolution_clock::now();
-	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "Random              : " << numIter / duration.count() << "M op/sec\n";// Show performance on millions operations per second
+// Random uniform [0, 1)
+static void BM_random_uniform_0_1(benchmark::State& _benchmark_state)
+{
+	wy::rand r; // Create a pseudo-random generator
+	for (auto _ : _benchmark_state) r.uniform_dist();
 
-	std::cout << "--------------------------------------------------" << std::endl;
-	//////////////////////////////////////////////////////////////////////////////////////
-	// Uniform operation
-	//////////////////////////////////////////////////////////////////////////////////////
-	start = std::chrono::high_resolution_clock::now();
-	for (size_t i = 0; i < numIter; i++) no_opd += r.uniform_dist();// Generate a random number
-	stop = std::chrono::high_resolution_clock::now();
-	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "Uniform [0, 1)      : " << numIter / duration.count() << "M op/sec\n";// Show performance on millions operations per second
+	benchmark::DoNotOptimize(r()); // Restrict compiler optimizations
+	_benchmark_state.SetItemsProcessed(_benchmark_state.iterations());
+}
+BENCHMARK(BM_random_uniform_0_1);
+// Random uniform [min, max)
+static void BM_random_uniform_min_max(benchmark::State& _benchmark_state)
+{
+	wy::rand r; // Create a pseudo-random generator
+	for (auto _ : _benchmark_state) r.uniform_dist(5.6, 11.7);
 
-	//////////////////////////////////////////////////////////////////////////////////////
-	// Uniform operation
-	//////////////////////////////////////////////////////////////////////////////////////
-	start = std::chrono::high_resolution_clock::now();
-	for (size_t i = 0; i < numIter; i++) no_opd += r.uniform_dist(5.6, 11.7);// Generate a random number
-	stop = std::chrono::high_resolution_clock::now();
-	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "Uniform [min, max)  : " << numIter / duration.count() << "M op/sec\n";// Show performance on millions operations per second
-
+	benchmark::DoNotOptimize(r()); // Restrict compiler optimizations
+	_benchmark_state.SetItemsProcessed(_benchmark_state.iterations());
+}
+BENCHMARK(BM_random_uniform_min_max);
+// Random uniform [0, k)
 #if !WYHASH_32BIT_MUM
-	//////////////////////////////////////////////////////////////////////////////////////
-	// Uniform operation
-	//////////////////////////////////////////////////////////////////////////////////////
-	start = std::chrono::high_resolution_clock::now();
-	for (size_t i = 0; i < numIter; i++) no_op ^= r.uniform_dist(5000);// Generate a random number
-	stop = std::chrono::high_resolution_clock::now();
-	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "Uniform [0, k)      : " << numIter / duration.count() << "M op/sec\n";// Show performance on millions operations per second
+static void BM_random_uniform_0_k(benchmark::State& _benchmark_state)
+{
+	wy::rand r; // Create a pseudo-random generator
+	for (auto _ : _benchmark_state) r.uniform_dist(5000);
 
-	std::cout << "--------------------------------------------------" << std::endl;
+	benchmark::DoNotOptimize(r()); // Restrict compiler optimizations
+	_benchmark_state.SetItemsProcessed(_benchmark_state.iterations());
+}
+BENCHMARK(BM_random_uniform_0_k);
 #endif
 
-	//////////////////////////////////////////////////////////////////////////////////////
-	// Gaussian operation
-	//////////////////////////////////////////////////////////////////////////////////////
-	start = std::chrono::high_resolution_clock::now();
-	for (size_t i = 0; i < numIter; i++) no_opd += r.gaussian_dist();// Generate a random number
-	stop = std::chrono::high_resolution_clock::now();
-	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "Gaussian [0, 1]     : " << numIter / duration.count() << "M op/sec\n";// Show performance on millions operations per second
-
-	//////////////////////////////////////////////////////////////////////////////////////
-	// Gaussian operation
-	//////////////////////////////////////////////////////////////////////////////////////
-	start = std::chrono::high_resolution_clock::now();
-	for (size_t i = 0; i < numIter; i++) no_opd += r.gaussian_dist(1.2, 2.5);// Generate a random number
-	stop = std::chrono::high_resolution_clock::now();
-	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "Gaussian [mean, std]: " << numIter / duration.count() << "M op/sec\n";// Show performance on millions operations per second
-
-	std::cout << "--------------------------------------------------" << std::endl;
-
-	//////////////////////////////////////////////////////////////////////////////////////
-	// Stream operation
-	//////////////////////////////////////////////////////////////////////////////////////
-	std::vector<uint8_t> vec(4096, 0); 
-	constexpr double GiB2GB = 1'000'000. / (1024 * 1024);// Constant to convert to base-2 GB definition
-	start = std::chrono::high_resolution_clock::now();
-	for (size_t i = 0; i < numIterStream; i++)
-	{
-		r.generate_stream(vec, 1024);// Generate a stream of random numbers
-		no_op ^= vec[0];
-	}
-	stop = std::chrono::high_resolution_clock::now();
-	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "Stream  [1024]      : " << GiB2GB * numIterStream / duration.count() << " GB/sec\n";// Show performance on GB per second
-
-	//////////////////////////////////////////////////////////////////////////////////////
-	// Stream operation
-	//////////////////////////////////////////////////////////////////////////////////////
-	start = std::chrono::high_resolution_clock::now();
-	for (size_t i = 0; i < numIterStream; i++)
-	{
-		r.generate_stream(vec, 4096);// Generate a stream of random numbers
-		no_op ^= vec[0];
-	}
-	stop = std::chrono::high_resolution_clock::now();
-	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "Stream  [4096]      : " << GiB2GB * numIterStream * 4 / duration.count() << " GB/sec\n";// Show performance on GB per second
-
-	std::cout << "--------------------------------------------------" << std::endl;
-
-	// Ensures no optimization
-	std::cout << ((no_op + no_opd) ? "" : "Bad luck!") << std::endl;
-}
-
-static void main_hash()
+// Random gaussian [0, 1]
+static void BM_random_gaussian_0_1(benchmark::State& _benchmark_state)
 {
-	constexpr size_t numIter = 100'000'000;
-	uint64_t no_op = 0;// variable to restrict compiler optimizations
+	wy::rand r; // Create a pseudo-random generator
+	for (auto _ : _benchmark_state) r.gaussian_dist();
 
-	std::cout << "--------------------------------------------------" << std::endl;
-	std::cout << "Hashing Performance" << std::endl;
-	std::cout << "--------------------------------------------------" << std::endl;
-
-	//////////////////////////////////////////////////////////////////////////////////////
-	// uint64_t operation
-	//////////////////////////////////////////////////////////////////////////////////////
-	wy::hash<uint64_t> hasherUint64;
-	auto start = std::chrono::high_resolution_clock::now();
-	for (size_t i = 0; i < numIter; i++) no_op ^= hasherUint64(i);// Hash
-	auto stop = std::chrono::high_resolution_clock::now();
-	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "uint64_t         : " << numIter / duration.count() << "M op/sec\n";// Show performance on millions operations per second
-
-	//////////////////////////////////////////////////////////////////////////////////////
-	// String operation
-	//////////////////////////////////////////////////////////////////////////////////////
-	wy::hash<std::string> hasherStr;
-	std::string small("01234567890123");
-	start = std::chrono::high_resolution_clock::now();
-	for (size_t i = 0; i < numIter; i++) no_op ^= hasherStr(small);// Hash
-	stop = std::chrono::high_resolution_clock::now();
-	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "std::string(14)  : " << numIter / duration.count() << "M op/sec\n";// Show performance on millions operations per second
-
-	small += "01234567890123";
-	start = std::chrono::high_resolution_clock::now();
-	for (size_t i = 0; i < numIter; i++) no_op ^= hasherStr(small);// Hash
-	stop = std::chrono::high_resolution_clock::now();
-	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "std::string(28)  : " << numIter / duration.count() << "M op/sec\n";// Show performance on millions operations per second
-
-	small += small; small += small;
-	start = std::chrono::high_resolution_clock::now();
-	for (size_t i = 0; i < numIter; i++) no_op ^= hasherStr(small);// Hash
-	stop = std::chrono::high_resolution_clock::now();
-	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "std::string(112) : " << numIter / duration.count() << "M op/sec\n";// Show performance on millions operations per second
-
-	small += small; small += small;
-	start = std::chrono::high_resolution_clock::now();
-	for (size_t i = 0; i < numIter; i++) no_op ^= hasherStr(small);// Hash
-	stop = std::chrono::high_resolution_clock::now();
-	duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "std::string(448) : " << numIter / duration.count() << "M op/sec\n";// Show performance on millions operations per second
-
-	std::cout << "--------------------------------------------------" << std::endl;
-
-	// Ensures no optimization
-	std::cout << (no_op ? "" : "Bad luck!") << std::endl;
+	benchmark::DoNotOptimize(r()); // Restrict compiler optimizations
+	_benchmark_state.SetItemsProcessed(_benchmark_state.iterations());
 }
-
-int main()
+BENCHMARK(BM_random_gaussian_0_1);
+// Random gaussian [mean, std]
+static void BM_random_gaussian_mean_std(benchmark::State& _benchmark_state)
 {
-	main_rand();
-	main_hash();
+	wy::rand r; // Create a pseudo-random generator
+	for (auto _ : _benchmark_state) r.gaussian_dist(1.2, 2.5);
 
-	return 0;
+	benchmark::DoNotOptimize(r()); // Restrict compiler optimizations
+	_benchmark_state.SetItemsProcessed(_benchmark_state.iterations());
 }
+BENCHMARK(BM_random_gaussian_mean_std);
+
+// Random stream
+static void BM_random_stream(benchmark::State& _benchmark_state)
+{
+	wy::rand r; // Create a pseudo-random generator
+	int64_t vector_length = _benchmark_state.range(0);
+	std::vector<uint8_t> vec(vector_length);
+	for (auto _ : _benchmark_state) r.generate_stream(vec, vector_length);
+
+	benchmark::DoNotOptimize(r()); // Restrict compiler optimizations
+	_benchmark_state.SetBytesProcessed(_benchmark_state.iterations() * vector_length);
+}
+BENCHMARK(BM_random_stream)->Range(16, 4096);
+
+// Hash uint64_t
+static void BM_hash_uint64(benchmark::State& _benchmark_state)
+{
+	wy::hash<uint64_t> hasher; // Create a hash generator
+	uint64_t no_op = 0; // variable to restrict compiler optimizations
+	for (auto _ : _benchmark_state) no_op ^= hasher(no_op);
+
+	benchmark::DoNotOptimize(no_op); // Restrict compiler optimizations
+	_benchmark_state.SetItemsProcessed(_benchmark_state.iterations());
+}
+BENCHMARK(BM_hash_uint64);
+// Hash string
+static void BM_hash_string(benchmark::State& _benchmark_state)
+{
+	wy::hash<std::string> hasher; // Create a hash generator
+	int64_t string_length = _benchmark_state.range(0);
+	std::string s;
+	s.assign(string_length, 'a');
+	uint64_t no_op = 0; // variable to restrict compiler optimizations
+	for (auto _ : _benchmark_state) no_op ^= hasher(s);
+
+	benchmark::DoNotOptimize(no_op); // Restrict compiler optimizations
+	_benchmark_state.SetItemsProcessed(_benchmark_state.iterations());
+}
+BENCHMARK(BM_hash_string)->Range(16, 4096);
+
+// Hash struct
+template<uint32_t SIZE> static void BM_hash_struct(benchmark::State& _benchmark_state)
+{
+	wy::hash<std::array<uint8_t, SIZE>> hasher; // Create a hash generator
+	int64_t string_length = _benchmark_state.range(0);
+	std::array<uint8_t, SIZE> array_to_hash;
+	uint64_t no_op = 0; // variable to restrict compiler optimizations
+	for (auto _ : _benchmark_state) no_op ^= hasher(array_to_hash);
+
+	benchmark::DoNotOptimize(no_op); // Restrict compiler optimizations
+	_benchmark_state.SetItemsProcessed(_benchmark_state.iterations());
+}
+BENCHMARK(BM_hash_struct<8>);
+BENCHMARK(BM_hash_struct<9>);
+
+BENCHMARK(BM_hash_struct<16>);
+BENCHMARK(BM_hash_struct<18>);
+
+BENCHMARK(BM_hash_struct<32>);
+BENCHMARK(BM_hash_struct<35>);
+
+BENCHMARK(BM_hash_struct<64>);
+BENCHMARK(BM_hash_struct<67>);

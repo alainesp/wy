@@ -2,11 +2,11 @@
 # This file is a C++ wrapper around wyhash: 
 # https://github.com/wangyi-fudan/wyhash
 # 
-# Copyright (c) 2022 by Alain Espinosa.
+# Copyright (c) 2022-2024 by Alain Espinosa.
 ###############################################################################################################
-cmake_minimum_required (VERSION 3.12)
+cmake_minimum_required (VERSION 3.24)
 
-project (wy VERSION 1.0.0.0 DESCRIPTION "Fast hashing and pseudo-random number generator"
+project (wy VERSION 1.1.0.0 DESCRIPTION "Fast hashing and pseudo-random number generator"
 			HOMEPAGE_URL https://github.com/alainesp/wy LANGUAGES CXX)
 
 # Warning
@@ -19,63 +19,43 @@ endif()
 ###############################################################################################################
 # Library configuration
 ###############################################################################################################
-option(WY_BUILD_EXAMPLE "Build the example" OFF)
-option(WY_BUILD_PERFORMANCE "Build the performance testing" OFF)
-option(WY_BUILD_TESTS "Build the tests" OFF)
-
 add_library(wy INTERFACE)
 target_include_directories(wy INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+set_property(TARGET wy PROPERTY COMPILE_WARNING_AS_ERROR ON) # Warning level 4 and all warnings as errors
 
 ###############################################################################################################
 # Executables
 ###############################################################################################################
+option(WY_BUILD_EXAMPLE "Build the example" OFF)
+option(WY_BUILD_PERFORMANCE "Build the performance testing" OFF)
+option(WY_BUILD_TESTS "Build the tests" OFF)
+
 if(WY_BUILD_EXAMPLE)
     add_executable(wyexamples "example.cpp")
     set_property(TARGET wyexamples PROPERTY CXX_STANDARD 20)	 # C++ language to use
     target_link_libraries(wyexamples PRIVATE wy)
-
-# Warning level 4 and all warnings as errors
-if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.24)
-    cmake_policy(SET CMP0135 NEW) # Avoid warning about DOWNLOAD_EXTRACT_TIMESTAMP in CMake 3.24
-    set_property(TARGET wyexamples PROPERTY COMPILE_WARNING_AS_ERROR ON)
-else()
-    if(MSVC)
-        target_compile_options(wyexamples PRIVATE /W4 /WX)
-        target_link_options(wyexamples PRIVATE /W4 /WX)
-    else()
-        target_compile_options(wyexamples PRIVATE -Wall -Wextra -pedantic -Werror -Wl,--fatal-warnings)
-    endif()
+    set_property(TARGET wyexamples PROPERTY COMPILE_WARNING_AS_ERROR ON) # Warning level 4 and all warnings as errors
 endif()
 
-endif()
+include(FetchContent)
 
 if(WY_BUILD_PERFORMANCE)
     add_executable(wyperformance "performance.cpp")
     set_property(TARGET wyperformance PROPERTY CXX_STANDARD 20)	 # C++ language to use
-    target_link_libraries(wyperformance PRIVATE wy)
 
-# Warning level 4 and all warnings as errors
-if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.24)
-    cmake_policy(SET CMP0135 NEW) # Avoid warning about DOWNLOAD_EXTRACT_TIMESTAMP in CMake 3.24
-    set_property(TARGET wyperformance PROPERTY COMPILE_WARNING_AS_ERROR ON)
-else()
-    if(MSVC)
-        target_compile_options(wyperformance PRIVATE /W4 /WX)
-        target_link_options(wyperformance PRIVATE /W4 /WX)
-    else()
-        target_compile_options(wyperformance PRIVATE -Wall -Wextra -pedantic -Werror -Wl,--fatal-warnings)
-    endif()
-endif()
-
+    FetchContent_Declare(benchmark URL https://github.com/google/benchmark/archive/refs/tags/v1.8.5.zip)
+    set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(benchmark)
+    target_link_libraries(wyperformance PRIVATE wy benchmark::benchmark benchmark::benchmark_main)
+    set_property(TARGET wyperformance PROPERTY COMPILE_WARNING_AS_ERROR ON) # Warning level 4 and all warnings as errors
 endif()
 
 ###############################################################################################################
 # Testing
 ###############################################################################################################
 if(WY_BUILD_TESTS)
-    include(FetchContent)
     SET(BUILD_GMOCK OFF)
-    FetchContent_Declare(googletest URL https://github.com/google/googletest/archive/refs/tags/release-1.11.0.zip)
+    FetchContent_Declare(googletest URL https://github.com/google/googletest/archive/refs/tags/v1.15.0.zip)
     # For Windows: Prevent overriding the parent project's compiler/linker settings
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(googletest)
@@ -85,19 +65,7 @@ if(WY_BUILD_TESTS)
     add_executable(runUnitTests "tests.cpp")
     set_property(TARGET runUnitTests PROPERTY CXX_STANDARD 20) # C++ language to use
     target_link_libraries(runUnitTests PRIVATE wy gtest_main)
-
-# Warning level 4 and all warnings as errors
-if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.24)
-    cmake_policy(SET CMP0135 NEW) # Avoid warning about DOWNLOAD_EXTRACT_TIMESTAMP in CMake 3.24
-    set_property(TARGET runUnitTests PROPERTY COMPILE_WARNING_AS_ERROR ON)
-else()
-    if(MSVC)
-        target_compile_options(runUnitTests PRIVATE /W4 /WX)
-        target_link_options(runUnitTests PRIVATE /W4 /WX)
-    else()
-        target_compile_options(runUnitTests PRIVATE -Wall -Wextra -pedantic -Werror -Wl,--fatal-warnings)
-    endif()
-endif()
+     set_property(TARGET runUnitTests PROPERTY COMPILE_WARNING_AS_ERROR ON) # Warning level 4 and all warnings as errors
 
     include(GoogleTest)
     gtest_discover_tests(runUnitTests)
