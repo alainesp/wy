@@ -152,11 +152,11 @@ namespace wy::internal
 
 	// read functions
 #if WYHASH_LITTLE_ENDIAN
-	static forceinline uint64_t _wyr8(const uint8_t* p) noexcept { uint64_t v; memcpy(&v, p, 8); return v; }
-	static forceinline uint64_t _wyr4(const uint8_t* p) noexcept { uint32_t v; memcpy(&v, p, 4); return v; }
+	static forceinline uint64_t _wyr8(const void* p) noexcept { uint64_t v; memcpy(&v, p, 8); return v; }
+	static forceinline uint64_t _wyr4(const void* p) noexcept { uint32_t v; memcpy(&v, p, 4); return v; }
 #else
-	static forceinline uint64_t _wyr8(const uint8_t* p) noexcept { uint64_t v; memcpy(&v, p, 8); return byteswap64(v); }
-	static forceinline uint64_t _wyr4(const uint8_t* p) noexcept { uint32_t v; memcpy(&v, p, 4); return byteswap32(v); }
+	static forceinline uint64_t _wyr8(const void* p) noexcept { uint64_t v; memcpy(&v, p, 8); return byteswap64(v); }
+	static forceinline uint64_t _wyr4(const void* p) noexcept { uint32_t v; memcpy(&v, p, 4); return byteswap32(v); }
 #endif
 	static forceinline uint64_t _wyr3(const uint8_t* p, size_t k) noexcept { return (((uint64_t)p[0]) << 16) | (((uint64_t)p[k >> 1]) << 8) | p[k - 1]; }
 
@@ -492,11 +492,16 @@ namespace wy {
 		/// </summary>
 		/// <param name="elem">The element to hash</param>
 		/// <returns>A 64-bits hash</returns>
-		forceinline uint64_t operator()(const T& elem) const noexcept
-		{
-			static_assert(sizeof(T) > 0, "Type to hash T should have variables");
-			return hash_imp::wyhash(reinterpret_cast<const uint8_t*>(&elem), sizeof(T));
-		}
+        forceinline uint64_t operator()(const T& elem) const noexcept
+        {
+            static_assert(sizeof(T) > 0, "Type to hash T should have variables");
+
+			if (sizeof(T) ==  4) return hash_imp::wyhash(internal::_wyr4(&elem));
+            if (sizeof(T) ==  8) return hash_imp::wyhash(internal::_wyr8(&elem));
+			if (sizeof(T) == 16) return internal::wyhash64(internal::_wyr8(&elem), internal::_wyr8(reinterpret_cast<const uint8_t*>(&elem) + 8));
+
+            return hash_imp::wyhash(reinterpret_cast<const uint8_t*>(&elem), sizeof(T));
+        }
 	};
 	/// <summary>
 	/// Partial specialization for pointer
@@ -511,30 +516,16 @@ namespace wy {
 			return hash_imp::wyhash(reinterpret_cast<const uint8_t*>(elem), sizeof(T));
 		}
 	};
-	
-	// Partial specializations: number
-	template<> struct hash<uint64_t> : private internal::hash_imp
-	{
-		using hash_imp::hash_imp;// Inherit constructors
-		forceinline uint64_t operator()(uint64_t number) const noexcept
-		{
-			return hash_imp::wyhash(number);
-		}
-	};
-	template<> struct hash<int64_t> : private internal::hash_imp
-	{
-		using hash_imp::hash_imp;// Inherit constructors
-		forceinline uint64_t operator()(int64_t number) const noexcept
-		{
-			return hash_imp::wyhash(number);
-		}
-	};
 
 	// Partial specializations: std::vector
-	//template<class T> struct hash<std::vector<T>> : public internal::hash_string_base<std::vector<T>>
-	//{
-	//	using hash_string_base::hash_string_base;// Inherit constructors
-	//};
+	template<class T> struct hash<std::vector<T>> :private internal::hash_imp
+	{
+		using hash_imp::hash_imp;// Inherit constructors
+		forceinline uint64_t operator()(const std::vector<T>& elem) const noexcept
+		{
+			return hash_imp::wyhash(reinterpret_cast<const uint8_t*>(elem.data()), elem.size() * sizeof(T));
+		}
+	};
 
 	// C strings
 	template<> struct hash<char*> : private internal::hash_imp
