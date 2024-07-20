@@ -54,6 +54,17 @@
 	#define _unlikely_(x) (x)
 #endif
 
+// forceinline macros
+#ifdef _MSC_VER
+    #define forceinline __forceinline
+#else
+    #ifdef __OPTIMIZE__
+        #define forceinline inline __attribute__((always_inline))
+    #else
+        #define forceinline inline
+    #endif
+#endif
+
 // endian macros
 #ifndef WYHASH_LITTLE_ENDIAN
 	#if defined(_WIN32) || defined(__LITTLE_ENDIAN__) || (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
@@ -80,14 +91,14 @@
 		#define byteswap64(v) _byteswap_uint64(v)
 		#define byteswap32(v) _byteswap_ulong(v)
 	#else
-		static inline uint64_t byteswap64(uint64_t v) noexcept
+		static forceinline uint64_t byteswap64(uint64_t v) noexcept
 		{
 			v = ((v & 0x00000000FFFFFFFFull) << 32) | ((v & 0xFFFFFFFF00000000ull) >> 32);
 			v = ((v & 0x0000FFFF0000FFFFull) << 16) | ((v & 0xFFFF0000FFFF0000ull) >> 16);
 			v = ((v & 0x00FF00FF00FF00FFull) <<  8) | ((v & 0xFF00FF00FF00FF00ull) >>  8);
 			return v;
 		}
-		static inline uint32_t byteswap32(uint32_t v) noexcept
+		static forceinline uint32_t byteswap32(uint32_t v) noexcept
 		{
 			return (((v >> 24) & 0xff) | ((v >> 8) & 0xff00) | ((v << 8) & 0xff0000) | ((v << 24) & 0xff000000));
 		}
@@ -99,9 +110,9 @@ namespace wy::internal
 {
 	// 128bit multiply function
 #if WYHASH_32BIT_MUM
-	static inline uint64_t _wyrot(uint64_t x) { return (x >> 32) | (x << 32); }
+	static forceinline uint64_t _wyrot(uint64_t x) { return (x >> 32) | (x << 32); }
 #endif
-	static inline void _wymum(uint64_t* A, uint64_t* B) noexcept {
+	static forceinline void _wymum(uint64_t* A, uint64_t* B) noexcept {
 #if WYHASH_32BIT_MUM
 		uint64_t hh = (*A >> 32) * (*B >> 32), hl = (*A >> 32) * (uint32_t)*B, lh = (uint32_t)*A * (*B >> 32), ll = (uint64_t)(uint32_t)*A * (uint32_t)*B;
 	#if WYHASH_CONDOM > 1
@@ -137,27 +148,27 @@ namespace wy::internal
 	}
 
 	// multiply and xor mix function, aka MUM
-	static inline uint64_t _wymix(uint64_t A, uint64_t B) noexcept { _wymum(&A, &B); return A ^ B; }
+	static forceinline uint64_t _wymix(uint64_t A, uint64_t B) noexcept { _wymum(&A, &B); return A ^ B; }
 
 	// read functions
 #if WYHASH_LITTLE_ENDIAN
-	static inline uint64_t _wyr8(const uint8_t* p) noexcept { uint64_t v; memcpy(&v, p, 8); return v; }
-	static inline uint64_t _wyr4(const uint8_t* p) noexcept { uint32_t v; memcpy(&v, p, 4); return v; }
+	static forceinline uint64_t _wyr8(const uint8_t* p) noexcept { uint64_t v; memcpy(&v, p, 8); return v; }
+	static forceinline uint64_t _wyr4(const uint8_t* p) noexcept { uint32_t v; memcpy(&v, p, 4); return v; }
 #else
-	static inline uint64_t _wyr8(const uint8_t* p) noexcept { uint64_t v; memcpy(&v, p, 8); return byteswap64(v); }
-	static inline uint64_t _wyr4(const uint8_t* p) noexcept { uint32_t v; memcpy(&v, p, 4); return byteswap32(v); }
+	static forceinline uint64_t _wyr8(const uint8_t* p) noexcept { uint64_t v; memcpy(&v, p, 8); return byteswap64(v); }
+	static forceinline uint64_t _wyr4(const uint8_t* p) noexcept { uint32_t v; memcpy(&v, p, 4); return byteswap32(v); }
 #endif
-	static inline uint64_t _wyr3(const uint8_t* p, size_t k) noexcept { return (((uint64_t)p[0]) << 16) | (((uint64_t)p[k >> 1]) << 8) | p[k - 1]; }
+	static forceinline uint64_t _wyr3(const uint8_t* p, size_t k) noexcept { return (((uint64_t)p[0]) << 16) | (((uint64_t)p[k >> 1]) << 8) | p[k - 1]; }
 
 	// A useful 64bit-64bit mix function to produce deterministic pseudo random numbers that can pass BigCrush and PractRand
-	static inline uint64_t wyhash64(uint64_t A, uint64_t B) noexcept { A ^= 0xa0761d6478bd642full; B ^= 0xe7037ed1a0b428dbull; _wymum(&A, &B); return _wymix(A ^ 0xa0761d6478bd642full, B ^ 0xe7037ed1a0b428dbull); }
+	static forceinline uint64_t wyhash64(uint64_t A, uint64_t B) noexcept { A ^= 0xa0761d6478bd642full; B ^= 0xe7037ed1a0b428dbull; _wymum(&A, &B); return _wymix(A ^ 0xa0761d6478bd642full, B ^ 0xe7037ed1a0b428dbull); }
 
 	// The wyrand PRNG that pass BigCrush and PractRand
-	static inline uint64_t wyrand(uint64_t* seed) noexcept { *seed += 0xa0761d6478bd642full; return _wymix(*seed, *seed ^ 0xe7037ed1a0b428dbull); }
+	static forceinline uint64_t wyrand(uint64_t* seed) noexcept { *seed += 0xa0761d6478bd642full; return _wymix(*seed, *seed ^ 0xe7037ed1a0b428dbull); }
 
 #if !WYHASH_32BIT_MUM
 	// fast range integer random number generation on [0,k) credit to Daniel Lemire. May not work when WYHASH_32BIT_MUM=1. It can be combined with wyrand, wyhash64 or wyhash.
-	static inline uint64_t wy2u0k(uint64_t r, uint64_t k) noexcept { _wymum(&r, &k); return k; }
+	static forceinline uint64_t wy2u0k(uint64_t r, uint64_t k) noexcept { _wymum(&r, &k); return k; }
 #endif
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -191,7 +202,7 @@ namespace wy {
 		/// Returns a random value in the closed interval [0, UINT64_MAX].
 		/// </summary>
 		/// <returns>A new 64-bit pseudo-random value</returns>
-		inline uint64_t operator()() noexcept
+		forceinline uint64_t operator()() noexcept
 		{
 			return internal::wyrand(&state);
 		}
@@ -217,7 +228,7 @@ namespace wy {
 		/// Generate a random value from the uniform distribution [0,1)
 		/// </summary>
 		/// <returns>The random value</returns>
-		inline double uniform_dist() noexcept
+		forceinline double uniform_dist() noexcept
 		{
 			uint64_t r = operator()();
 			// code taken from 'wyhash.h::wy2u01(uint64_t r)'
@@ -231,7 +242,7 @@ namespace wy {
 		/// <param name="min_value">The minimum value (inclusive)</param>
 		/// <param name="max_value">The maximum value (exclusive)</param>
 		/// <returns>The random value</returns>
-		inline double uniform_dist(double min_value, double max_value) noexcept
+		forceinline double uniform_dist(double min_value, double max_value) noexcept
 		{
 			assert(max_value > min_value);
 
@@ -244,7 +255,7 @@ namespace wy {
 		/// </summary>
 		/// <param name="max_value">The maximum value (exclusive)</param>
 		/// <returns>The random value</returns>
-		inline uint64_t uniform_dist(uint64_t max_value) noexcept
+		forceinline uint64_t uniform_dist(uint64_t max_value) noexcept
 		{
 			return internal::wy2u0k(operator()(), max_value);
 		}
@@ -254,7 +265,7 @@ namespace wy {
 		/// Generate a random value from APPROXIMATE Gaussian distribution with mean=0 and std=1
 		/// </summary>
 		/// <returns>The random value</returns>
-		inline double gaussian_dist() noexcept
+		forceinline double gaussian_dist() noexcept
 		{
 			uint64_t r = operator()();
 			// code taken from 'wyhash.h::wy2gau(uint64_t r)'
@@ -268,7 +279,7 @@ namespace wy {
 		/// <param name="mean">The Gaussian mean</param>
 		/// <param name="std">The Gaussian Standard Deviation</param>
 		/// <returns>The random value</returns>
-		inline double gaussian_dist(double mean, double std) noexcept
+		forceinline double gaussian_dist(double mean, double std) noexcept
 		{
 			assert(std > 0);
 
@@ -281,7 +292,7 @@ namespace wy {
 		/// <typeparam name="T">The type of elements on the vector to fill with random data</typeparam>
 		/// <param name="size">The number of elements of the vector to generate</param>
 		/// <returns>A vector of random elements</returns>
-		template<class T=uint8_t> inline std::vector<T> generate_stream(size_t size) noexcept
+		template<class T=uint8_t> forceinline std::vector<T> generate_stream(size_t size) noexcept
 		{
 			std::vector<T> result;
 			generate_stream<T>(result, size);
@@ -415,7 +426,7 @@ namespace wy {
 			/// <param name="data">The data to hash</param>
 			/// <param name="len">The size of the data</param>
 			/// <returns>A 64-bits hash</returns>
-			inline uint64_t wyhash(const uint8_t* data, size_t len) const noexcept
+			forceinline uint64_t wyhash(const uint8_t* data, size_t len) const noexcept
 			{
 				// code taken from 'wyhash.h::wyhash(const void* key, size_t len, uint64_t seed, const uint64_t * secret)' with seed=0
 				const uint8_t* p = (const uint8_t*)data;
@@ -448,7 +459,7 @@ namespace wy {
 			/// </summary>
 			/// <param name="number">The number to hash</param>
 			/// <returns>A 64-bits hash</returns>
-			inline uint64_t wyhash(uint64_t number) const noexcept
+			forceinline uint64_t wyhash(uint64_t number) const noexcept
 			{
 				return internal::wyhash64(number, secret[0]);
 			}
@@ -461,7 +472,7 @@ namespace wy {
 		template<class STRING_TYPE> struct hash_string_base : private hash_imp
 		{
 			using hash_imp::hash_imp;// Inherit constructors
-			inline uint64_t operator()(const STRING_TYPE& elem) const noexcept
+			forceinline uint64_t operator()(const STRING_TYPE& elem) const noexcept
 			{
 				return hash_imp::wyhash(reinterpret_cast<const uint8_t*>(elem.data()), sizeof(typename STRING_TYPE::value_type) * elem.size());
 			}
@@ -481,7 +492,7 @@ namespace wy {
 		/// </summary>
 		/// <param name="elem">The element to hash</param>
 		/// <returns>A 64-bits hash</returns>
-		inline uint64_t operator()(const T& elem) const noexcept
+		forceinline uint64_t operator()(const T& elem) const noexcept
 		{
 			static_assert(sizeof(T) > 0, "Type to hash T should have variables");
 			return hash_imp::wyhash(reinterpret_cast<const uint8_t*>(&elem), sizeof(T));
@@ -494,7 +505,7 @@ namespace wy {
 	template<class T> struct hash<T*> : private internal::hash_imp
 	{
 		using hash_imp::hash_imp;// Inherit constructors
-		inline uint64_t operator()(const T* elem) const noexcept
+		forceinline uint64_t operator()(const T* elem) const noexcept
 		{
 			static_assert(sizeof(T) > 0, "Type to hash T should have variables");
 			return hash_imp::wyhash(reinterpret_cast<const uint8_t*>(elem), sizeof(T));
@@ -505,7 +516,7 @@ namespace wy {
 	template<> struct hash<uint64_t> : private internal::hash_imp
 	{
 		using hash_imp::hash_imp;// Inherit constructors
-		inline uint64_t operator()(uint64_t number) const noexcept
+		forceinline uint64_t operator()(uint64_t number) const noexcept
 		{
 			return hash_imp::wyhash(number);
 		}
@@ -513,7 +524,7 @@ namespace wy {
 	template<> struct hash<int64_t> : private internal::hash_imp
 	{
 		using hash_imp::hash_imp;// Inherit constructors
-		inline uint64_t operator()(int64_t number) const noexcept
+		forceinline uint64_t operator()(int64_t number) const noexcept
 		{
 			return hash_imp::wyhash(number);
 		}
@@ -529,7 +540,7 @@ namespace wy {
 	template<> struct hash<char*> : private internal::hash_imp
 	{
 		using hash_imp::hash_imp;// Inherit constructors
-		inline uint64_t operator()(const char* data) const noexcept
+		forceinline uint64_t operator()(const char* data) const noexcept
 		{
 			return hash_imp::wyhash(reinterpret_cast<const uint8_t*>(data), strlen(data));
 		}
@@ -537,7 +548,7 @@ namespace wy {
 	template<> struct hash<const char*> : private internal::hash_imp
 	{
 		using hash_imp::hash_imp;// Inherit constructors
-		inline uint64_t operator()(const char* data) const noexcept
+		forceinline uint64_t operator()(const char* data) const noexcept
 		{
 			return hash_imp::wyhash(reinterpret_cast<const uint8_t*>(data), strlen(data));
 		}
