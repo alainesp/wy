@@ -2,7 +2,7 @@
 // This file is a C++ wrapper around wyhash: 
 // https://github.com/wangyi-fudan/wyhash
 // 
-// Copyright (c) 2022 by Alain Espinosa.
+// Copyright (c) 2022-2024 by Alain Espinosa.
 /////////////////////////////////////////////////////////////////////////////////
 // wyhash and wyrand are the ideal 64-bit hash function and PRNG respectively:
 //

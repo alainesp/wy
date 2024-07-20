@@ -9,6 +9,7 @@
 #include <wy.hpp>
 #include <gtest/gtest.h>
 #include "wyhash.h"
+#include <memory_resource>
 
 /////////////////////////////////////////////////////////////////////////////////
 /// General
